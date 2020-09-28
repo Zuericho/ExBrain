@@ -1,28 +1,31 @@
 main.view.dropdown = {
   setupUserInterface: async function() {
-    main.view.dropdown.setupDropdown( {type: "ProjectStatus", state: 0, headline: "Status: ", showall: true} );
+    var dropdownDiv = document.querySelector("div#dropdown");
+    main.view.dropdown.setupDropdown( {element: dropdownDiv, type: "ProjectStatus", state: 0, headline: "Status: ", showall: true} );
   },
 
   setupDropdown: async function(slots) {
+    let elem = slots.element;
     var instance = new CustomDropdown( slots );
 main.ctrl.status = instance;
-    var dropdownDiv = document.querySelector("div#dropdown");
     var label = document.createElement("strong");
     var dropdown = document.createElement("div");
+    var header = document.createElement("div");
     var list = document.createElement("div");
-    dropdownDiv.textContent = "";
+    elem.textContent = "";
     
-    dropdownDiv.appendChild(label);
+    elem.appendChild(label);
+    dropdown.appendChild(header);
     dropdown.appendChild(list);
-    dropdownDiv.appendChild(dropdown);
+    elem.appendChild(dropdown);
 
     main.view.dropdown.setupLabel(label, instance);
     await instance.load;
-    main.view.dropdown.setupHeader(dropdown, instance);
+    main.view.dropdown.setupHeader(header, instance);
     main.view.dropdown.fillList(list, instance);
 
-    dropdownDiv.addEventListener( 'delete', e => { instance.boundDeleteItem(e.detail); e.stopPropagation() } );
-    dropdownDiv.addEventListener( 'option', e => { instance.boundSelect(e.detail); e.stopPropagation(); } );
+    elem.addEventListener( 'delete', e => { instance.boundDeleteItem(e.detail.id, e.detail.elem); e.stopPropagation() } );
+    elem.addEventListener( 'option', e => { instance.boundSelect(e.detail.id); e.stopPropagation(); } );
   },
 
   setupLabel: function(el, obj) {
@@ -31,12 +34,20 @@ main.ctrl.status = instance;
   },
 
   setupHeader: function(el, obj) {
-    var text = obj.itemOfId( obj.state ).text;
+    var headline = document.createElement("div");
     var togglebtn = document.createElement("button");
     togglebtn.append("v");
-    el.prepend(togglebtn);
-    el.prepend(text);
+
+    el.append(headline);
+    el.append(togglebtn);
+
+    main.view.dropdown.setHeadlineText(headline, obj);
     togglebtn.addEventListener('click', event => {  obj.toggle() } );
+  },
+
+  setHeadlineText: function(el, obj) {
+    var text = obj.itemOfId( obj.state ).text;
+    el.textContent = text;
   },
 
   fillList: function(el, obj) {
@@ -55,12 +66,12 @@ main.ctrl.status = instance;
     var row = el.insertRow();
     var cell = row.insertCell(-1)
     cell.textContent = option.text;
-    var optionEvt = new CustomEvent('option', {bubbles: true, detail: option.id});
+    var optionEvt = new CustomEvent('option', {bubbles: true, detail: {id: option.id} });
     cell.addEventListener('click', e => { row.dispatchEvent( optionEvt ) } );
     if (option.del) {
       var deletebtn = document.createElement("button");
       deletebtn.textContent = "x";
-      var deleteEvt = new CustomEvent('delete', {bubbles: true, detail: option.id});
+      var deleteEvt = new CustomEvent('delete', {bubbles: true, detail: {id: option.id, elem: row} });
       deletebtn.addEventListener('click', e => { row.dispatchEvent( deleteEvt ) } );
       row.insertCell(-1).appendChild(deletebtn);
     }

@@ -17,10 +17,13 @@ class DropdownItem {
   }
 
   delete() {
-    alert( "Delete called on DropdownItem. Id is " + this.id );
     //Wrap in switch case on type
     let item = new ProjectStatus( {id: this.id} );
 
-    item.delete();
+    let code = item.delete().then( (response) => {
+      return response.status;
+    });
+
+    return code;
   }
 }

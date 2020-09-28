@@ -1,6 +1,7 @@
 class CustomDropdown {
 
   constructor( slots) {
+    this.element = slots.element;
     this.type = slots.type;
     this.state = slots.state;
     this.headline = slots.headline;
@@ -45,7 +46,7 @@ class CustomDropdown {
 
   toggle() {
     alert( "Dropdown " + this.headline + " was toggled!" );
-    //Update view
+    //TODO: Update view
   }
 
   addItem() {
@@ -63,24 +64,32 @@ class CustomDropdown {
     //Update view
   }
 
-  deleteItem(id) {
-    alert("Dropdown deleteItem: " + id);
+  deleteItem(id, listElement) {
     const item = this.itemOfId(id);
-    item.delete();
+    let responsecode = item.delete();
 
-    //Update list
-//    const index = this.indexOfId(id);
-//    this.list.splice( index, 1);
+    //When response is ready:
+    responsecode.then( (code) => {
+      if (code === 200) {
+        //Update list
+        const index = this.indexOfId(id);
+        this.list.splice( index, 1);
 
-    //Update view
+        //Update view
+        listElement.remove();
+      }
+    });
   }
 
   select(id) {
-    alert("Dropdown select: " + id);
     this.state = id;
 
     //Update view
+    let dropdown = this.element.children[1];
+    let header = dropdown.children[0];
+    let headline = header.children[0];
+    main.view.dropdown.setHeadlineText(headline, this);
 
-    //Fire event on changestate
+    //TODO: Fire event on changestate
   }
 }

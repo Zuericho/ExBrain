@@ -46,23 +46,16 @@ class ProjectStatus {
   delete() {
     const api = ProjectStatus.api + "delete.php";
     const data = { id: this.id };
-    fetch( api, {
+    return fetch( api, {
       method: 'POST',
       headers: {
         'content-Type': 'application/json',
       },
       body: JSON.stringify(data),
     })
-.then( alert("ProjectStatus " + this.name + " was deleted") )
     .catch( (error) => {
       alert("Error: " + error);
     });
   }
 
-//DropdownItem:
-  //delete()
-
-  select() {
-    this.dropdown.changeState();
-  }
 }
