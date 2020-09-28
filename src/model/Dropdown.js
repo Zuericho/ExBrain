@@ -1,54 +1,86 @@
 class CustomDropdown {
 
   constructor( slots) {
-    this.table = slots.table;
+    this.type = slots.type;
     this.state = slots.state;
     this.headline = slots.headline;
     this.showall = slots.showall;
     this.list = [];
     this.read();
+    this.boundDeleteItem = this.deleteItem.bind(this);
+    this.boundSelect = this.select.bind(this);
   }
 
   read() {
     const _this = this;
 
-    this.list = [];
     if (this.showall) {
-      this.list.push( {id: "0", name: "Alle..." } );
+      let item = new DropdownItem( {id: "0", text: "Alle...", del: false} );
+      this.list.push( item );
     }
 
-    //Wrap in swtch case on dropdown type:
+    //TODO: Wrap in switch case on dropdown type:
     this.load = ProjectStatus.readAll();
 
     this.load.then( function(data) {
       var i;
       for ( i = 0; i < data.length; i++ ) {
-        _this.list.push(data[i]);
+        let item = new DropdownItem( {id: data[i].id, text: data[i].name, del: true, type: _this.type} );
+        _this.list.push( item );
       }
     });
   }
 
-  nameOfId(id) {
-    const ids = this.list.map(el => el.id);
+  indexOfId(id) {
+    const ids = this.list.map(el => {return el.id});
     const index = ids.indexOf( id.toString() );
-    const name = this.list[index].name;
-    return name;
+    return index;
+  }
+
+  itemOfId(id) {
+    const ids = this.list.map(el => {return el.id});
+    const index = ids.indexOf( id.toString() );
+    return this.list[index];
   }
 
   toggle() {
     alert( "Dropdown " + this.headline + " was toggled!" );
+    //Update view
   }
 
   addItem() {
-    let itemname = "Test";
+    let itemname = "Test"; //TODO Remove hardcoding
 
     //Wrap in switch case on dropdown type:
     let item = new ProjectStatus( {name: itemname} );
 
     item.create();
 
-    //Update this.list
+    //Update list
+//    const index = this.indexOfId(id);
+//    this.list.splice( index, 1);
+
     //Update view
   }
 
+  deleteItem(id) {
+    alert("Dropdown deleteItem: " + id);
+    const item = this.itemOfId(id);
+    item.delete();
+
+    //Update list
+//    const index = this.indexOfId(id);
+//    this.list.splice( index, 1);
+
+    //Update view
+  }
+
+  select(id) {
+    alert("Dropdown select: " + id);
+    this.state = id;
+
+    //Update view
+
+    //Fire event on changestate
+  }
 }

@@ -35,7 +35,7 @@ class ProjectStatus {
       let list = [];
       var i;
       for ( i = 0; i < data.records.length; i++ ) {
-        let item = new ProjectStatus( data.records[i]);
+        let item = new ProjectStatus( data.records[i] );
         list.push(item);
       };
       return list;
@@ -59,4 +59,10 @@ class ProjectStatus {
     });
   }
 
+//DropdownItem:
+  //delete()
+
+  select() {
+    this.dropdown.changeState();
+  }
 }
