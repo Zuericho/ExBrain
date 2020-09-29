@@ -11,15 +11,16 @@ class ProjectStatus {
   create() {
     const api = ProjectStatus.api + "create.php";
     const data = { name: this.name };
-    fetch( api, {
+    return fetch( api, {
       method: 'POST',
       headers: {
         'content-Type': 'application/json',
       },
       body: JSON.stringify(data),
     })
-    .then(response => response.json())
-    .then( alert("Data was uploaded") )
+    .then(response => {
+      return response;
+    })
     .catch( (error) => {
       alert("Error: " + error);
     });
