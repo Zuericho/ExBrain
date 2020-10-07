@@ -1,45 +1,135 @@
 class CustomDropdown {
 
   constructor( slots) {
+    this.boundDeleteEventHandler = this.deleteEventHandler.bind(this);
+    this.boundSelectEventHandler = this.selectEventHandler.bind(this);
+    this.boundAddItem = this.addItem.bind(this);
+    this.boundToggle = this.toggle.bind(this);
+
     this.element = slots.element;
     this.type = slots.type;
     this.state = slots.state;
     this.headline = slots.headline;
     this.showall = slots.showall;
-    this.list = [];
+    this.list;
+    this.listelement;
+    this.listcontainer;
+    this.headlineelement;
+
+    this.setupUI();
     this.read();
-    this.boundDeleteItem = this.deleteItem.bind(this);
-    this.boundSelect = this.select.bind(this);
-    this.boundAddItem = this.addItem.bind(this);
   }
+
+  setupUI() {
+    this.element.textContent = "";
+
+    //Create internal HTML elements
+    let label = document.createElement("strong");
+    let dropdown = document.createElement("div");
+      let header = document.createElement("div");
+        let headline = document.createElement("div");
+        let togglebtn = document.createElement("button");
+      let list = document.createElement("div");
+        let items = document.createElement("div");
+          let table = document.createElement("table");
+            let tbody = document.createElement("tbody");
+        let add = document.createElement("div");
+          let addbtn = document.createElement("button");
+
+    //Setup element hierarchy
+    this.element.appendChild(label);
+      label.textContent = this.headline;
+    this.element.appendChild(dropdown);
+      dropdown.appendChild(header);
+        header.append(headline);
+        header.append(togglebtn);
+          togglebtn.append("v");
+      dropdown.appendChild(list);
+        list.appendChild(items);
+          items.appendChild(table);
+            table.appendChild(tbody);
+        list.appendChild(add);
+          add.appendChild(addbtn);
+            addbtn.textContent = "+";
+
+    //Layout the elements
+    list.style.position = "absolute";
+    list.style.background = "gainsboro";
+    dropdown.style.display = "inline-block";
+    headline.style.display = "inline-block";
+    header.style.border = "inset";
+
+    //Add event listeners
+    togglebtn.addEventListener('click', this.boundToggle );
+    addbtn.addEventListener('click', this.boundAddItem );
+    this.element.addEventListener( 'delete', this.boundDeleteEventHandler );
+    this.element.addEventListener( 'select', this.boundSelectEventHandler );
+
+    //Store elements for internal parsings
+    this.listelement = list;
+    this.listcontainer = tbody;
+    this.headlineelement = headline;
+
+    //Initiate view of dropdown
+    this.hide();
+
+ }
+
+//TODO: Write method "unsetUI()"
 
   read() {
     this.list = [];
     const _this = this;
 
     if (this.showall) {
-      let item = new DropdownItem( {element: this.element, id: "0", text: "Alle...", del: false} );
+      let parameters = {
+        id: "0",
+        text: "Alle...",
+        del: false
+      };
+      let item = new DropdownItem( parameters );
       this.list.push( item );
     }
 
-    //TODO: Wrap in switch case on dropdown type:
-    this.load = ProjectStatus.readAll();
+    let content;
+    switch (this.type) {
+      case 'ProjectStatus':
+        content = ProjectStatus.readAll();
+        break;
+      case 'Context':
+        content = Context.readAll();
+        break;
+      case 'MaybeCategory':
+        content = MaybeCategory.readAll();
+        break;
+      case 'FocusArea':
+        content = FocusArea.readAll();
+        break;
+    }
 
-    this.load.then( function(data) {
+    content.then( function(data) {
       var i;
       for ( i = 0; i < data.length; i++ ) {
-        let item = new DropdownItem( {element: _this.element, id: data[i].id, text: data[i].name, del: true, type: _this.type} );
+        let parameters = {
+          id: data[i].id,
+          text: data[i].name,
+          del: true,
+          type: _this.type
+        };
+        let item = new DropdownItem( parameters );
         _this.list.push( item );
       }
     })
     .then( () => {
-      let dropdown = this.element.children[1];
-      let header = dropdown.children[0];
-      let headline = header.children[0];
-      let items = dropdown.children[1].children[0];
-      main.view.dropdown.setHeadlineText(headline, this);
-      main.view.dropdown.fillList( items, this);
+      this.setHeadlineText();
+      _this.fillList();
     });
+    return content;
+  }
+
+  hide() {
+    let list = this.listelement;
+    list.style.display = "none";
   }
 
   indexOfId(id) {
@@ -54,22 +144,41 @@ class CustomDropdown {
     return this.list[index];
   }
 
+  show() {
+    let list = this.listelement;
+    list.style.display = "block";
+  }
+
   toggle() {
-    let list = this.element.children[1].children[1];
+    let list = this.listelement;
     let display = list.style.display;
     if (display == "none") {
-      list.style.display = "block";
+      this.show();
     } else {
-      list.style.display = "none";
+      this.hide();
     }
   }
 
+  //TODO: Prevent creation of option with name identical to existing name
   addItem() {
     let itemname = prompt("Indtast ny mulighed");
     if (itemname == null || itemname == "") { return; }
 
-    //Wrap in switch case on dropdown type:
-    let item = new ProjectStatus( {name: itemname} );
+    let item;
+    switch (this.type) {
+      case 'ProjectStatus':
+        item = new ProjectStatus( {name: itemname} );
+        break;
+      case 'Context':
+        item = new Context( {name: itemname} );
+        break;
+      case 'MaybeCategory':
+        item = new MaybeCategory( {name: itemname} );
+        break;
+      case 'FocusArea':
+        item = new FocusArea( {name: itemname} );
+        break;
+    }
 
     let response = item.create();
 
@@ -78,24 +187,50 @@ class CustomDropdown {
       if (response.status === 201) {
 
         //Update list and view
-        let dropdown = this.element.children[1];
-        let list = dropdown.children[1];
-        let items = list.children[0];
-        main.view.dropdown.unfillList(items, this);
-        this.read();
+        this.unfillList();
+        let content = this.read();
 
         //Change state to newly added option
-        this.load.then( () => {
+        content.then( () => {
           let id = this.textToId(itemname);
           this.select(id);
         });
+
+        //Hide list
+        this.hide();
       }
     });
   }
 
+  deleteEventHandler(event) {
+    event.stopPropagation();
+    let id = event.detail.id;
+    let listElement = event.detail.elem;
+    this.deleteItem(id, listElement);
+  }
+
   deleteItem(id, listElement) {
-    //Wrap in switch case on type
-    let item = new ProjectStatus( {id: id} );
+    if (id == this.state) {
+    //Alert user, do not delete
+      alert("Fejl: Det er ikke tilladt at slette den aktive mulighed.");
+      return;
+    }
+
+    let item
+    switch (this.type) {
+      case 'ProjectStatus':
+        item = new ProjectStatus( {id: id} );
+        break;
+      case 'Context':
+        item = new Context( {id: id} );
+        break;
+      case 'MaybeCategory':
+        item = new MaybeCategory( {id: id} );
+        break;
+      case 'FocusArea':
+        item = new FocusArea( {id: id} );
+        break;
+    }
 
     let responsecode = item.delete().then( (response) => {
       return response.status;
@@ -104,25 +239,36 @@ class CustomDropdown {
     //When response is ready:
     responsecode.then( (code) => {
       if (code === 200) {
-        //Update list
+        //Lookup index
         const index = this.indexOfId(id);
-        this.list.splice( index, 1);
 
         //Update view
-        listElement.remove();
+        let item = this.list[index];
+        item.unsetUI();
+        item.element.remove();
+
+        //Update list
+        this.list.splice( index, 1);
       }
     });
+  }
+
+  selectEventHandler(event) {
+    event.stopPropagation();
+    let id = event.detail.id;
+    this.select(id);
   }
 
   select(id) {
     this.state = id;
 
     //Update view
-    let dropdown = this.element.children[1];
-    let header = dropdown.children[0];
-    let headline = header.children[0];
-    main.view.dropdown.setHeadlineText(headline, this);
+    this.setHeadlineText();
 
+    //Hide list
+    this.hide();
+
+    //Emmit statechange event
     let changeEvt = new CustomEvent('statechange', {
       bubbles: true,
       detail: {
@@ -137,5 +283,34 @@ class CustomDropdown {
     const texts = this.list.map(el => {return el.text});
     const index = texts.indexOf( text );
     return this.list[index].id;
+  }
+
+  setHeadlineText() {
+    var text = this.itemOfId( this.state ).text;
+    this.headlineelement.textContent = text;
+  }
+
+  fillList() {
+    var i;
+    for ( i=0; i<this.list.length; i++) {
+      this.appendOption( this.list[i] );
+    }
+  }
+
+  appendOption( option ) {
+    option.setupUI();
+    this.listcontainer.appendChild(option.element);
+  }
+
+  unfillList() {
+    let tbody = this.listcontainer;
+    let i;
+    for (i=0; i<this.list.length; i++) {
+      let item = this.list[i];
+      item.unsetUI();
+    }
+
+    //Delete content of listcontainer
+    tbody.textContent = "";
   }
 }

@@ -6,6 +6,9 @@
   <script src="src/ctrl/initialize.js"></script>
   <script src="src/model/Dropdown.js"></script>
   <script src="src/model/ProjectStatus.js"></script>
+  <script src="src/model/FocusArea.js"></script>
+  <script src="src/model/Context.js"></script>
+  <script src="src/model/MaybeCategory.js"></script>
   <script src="src/model/DropdownItem.js"></script>
   <script src="src/view/dropdown.js"></script>
   <script>
@@ -25,7 +28,9 @@
     <li><button type="button" onclick="Book.createTestData()">Create test data</button></li>
 -->
   </menu>
-  <div id="dropdown"></div>
-  <p>This text is pushed around by dropdown. Fix with CSS: position absolute</p>
+  <div id="dropdownStatus"></div>
+  <div id="dropdownFocus"></div>
+  <div id="dropdownContext"></div>
+  <div id="dropdownCategory"></div>
 </body>
 </html> 
